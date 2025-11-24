@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova solicitação de passaporte - Polícia Federal (MOCK)</title>
+    <style>
+        :root {
+            --pf-dark-blue: #0c326f;
+            --pf-med-blue: #1f4e92;
+            --pf-light-blue: #e6f0ff;
+            --section-bg: #f8f9fa;
+            --border-color: #ced4da;
+            --text-color: #333;
+            --error-red: #d9534f;
+            --success-green: #28a745;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: var(--text-color);
+            font-size: 14px; 
+        }
+
+        #mock-toolbar {
+            background: #333; color: white; padding: 10px; text-align: center;
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: center; gap: 15px; align-items: center;
+        }
+        #mock-toolbar button {
+            background: #f1c40f; border: none; padding: 5px 15px; cursor: pointer; font-weight: bold; border-radius: 3px;
+        }
+        body { padding-top: 50px; } 
+
+        .pf-header {
+            background-color: var(--pf-dark-blue);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+        }
+        .pf-logo-placeholder {
+            width: 40px; height: 40px;
+            background: url('https://www.gov.br/pf/++theme++padrao_govbr/img/brasao.png') no-repeat center/contain;
+            margin-right: 15px;
+        }
+        .pf-titles h1 { margin: 0; font-size: 1.1rem; font-weight: normal; }
+        .pf-titles h2 { margin: 0; font-size: 0.8rem; opacity: 0.8; font-weight: normal; }
+        
+        .pf-navbar {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            color: var(--pf-dark-blue);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .page-title {
+            padding: 20px;
+            font-size: 1.4rem;
+            color: #333;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .tabs-container {
+            display: flex;
+            background-color: #eee;
+            border-bottom: 3px solid var(--pf-med-blue);
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #666;
+            background: #e9ecef;
+            border-right: 1px solid #ddd;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .tab.active {
+            background-color: var(--pf-med-blue);
+            color: white;
+        }
+
+        .form-content { padding: 25px; display: none; }
+        .form-content.active-step { display: block; }
+
+        .section-title {
+            color: var(--pf-med-blue);
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+        .section-title:first-child { margin-top: 0; }
+        
+        .row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            align-items: flex-end; 
+        }
+        .col { flex: 1; }
+        .col-auto { flex: 0 0 auto; }
+        .w-10 { flex: 0 0 10%; }
+        .w-20 { flex: 0 0 20%; }
+        .w-30 { flex: 0 0 30%; }
+        .w-40 { flex: 0 0 40%; }
+        .w-50 { flex: 0 0 50%; }
+
+        label {
+            display: block; margin-bottom: 4px;
+            font-weight: 600; color: #444; font-size: 0.85rem;
+        }
+        .req { color: var(--error-red); }
+
+        input, select {
+            width: 100%; padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-size: 0.9rem;
+            height: 34px; 
+        }
+        input:focus, select:focus { border-color: var(--pf-med-blue); outline: none; }
+        
+        .checkbox-wrapper {
+            display: flex; align-items: center; height: 34px; gap: 5px;
+        }
+        .checkbox-wrapper input { width: auto; height: auto; margin: 0; }
+        .checkbox-wrapper label { margin: 0; font-weight: normal; }
+
+        .help-icon {
+            display: inline-block; width: 16px; height: 16px;
+            background: orange; color: white; border-radius: 3px;
+            text-align: center; line-height: 16px; font-size: 10px;
+            font-weight: bold; margin-left: 5px; cursor: help;
+        }
+
+        input.error, select.error { border-color: var(--error-red); background-color: #fffdfd; }
+        .error-msg {
+            color: var(--error-red); font-size: 0.75rem; margin-top: 2px; display: none;
+        }
+        .has-error .error-msg { display: block; }
+
+        .buttons-footer {
+            padding: 20px 0; margin-top: 30px;
+            border-top: 1px solid #ddd;
+            display: flex; justify-content: space-between;
+        }
+        .btn {
+            padding: 8px 25px; border-radius: 3px; cursor: pointer;
+            font-weight: bold; font-size: 0.85rem; border: none; text-transform: uppercase;
+        }
+        .btn-prev { background: #fff; border: 1px solid #ccc; color: #555; }
+        .btn-prev:hover { background: #f0f0f0; }
+        .btn-next { background: var(--pf-med-blue); color: white; }
+        .btn-next:hover { background: var(--pf-dark-blue); }
+        .btn-submit { background: var(--success-green); color: white; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 5px;
+            text-align: center; width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="mock-toolbar">
+        <span>🔧 Modo Desenvolvedor:</span>
+        <button onclick="carregarMock('padrao')">Preencher Dados Padrão</button>
+        <button onclick="carregarMock('erro')">Preencher Incompleto</button>
+        <button onclick="limparFormulario()">Limpar</button>
+    </div>
+
+    <header class="pf-header">
+        <div class="pf-logo-placeholder"></div>
+        <div class="pf-titles">
+            <h1>Divisão de passaporte</h1>
+            <h2>Coordenação-Geral de Polícia de Imigração</h2>
+        </div>
+    </header>
+    <nav class="pf-navbar">
+        <span>🏠 Solicitação de passaporte ▾</span>
+        <span style="margin-left: 15px;">Agendamento de atendimento ▾</span>
+        <span style="margin-left: 15px;">Outros serviços ▾</span>
+    </nav>
+
+    <main class="main-container">
+        <h2 class="page-title">Nova solicitação de passaporte</h2>
+
+        <div class="tabs-container">
+            <div class="tab active" id="tab-1">Dados pessoais</div>
+            <div class="tab" id="tab-2">Documentos</div>
+            <div class="tab" id="tab-3">Dados complementares</div>
+            <div class="tab" id="tab-4">Revisar dados</div>
+        </div>
+
+        <form id="mainForm">
+            
+            <div class="form-content active-step" id="step-1">
+                <div class="section-title">Dados Pessoais</div>
+                
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Nome completo <span class="req">*</span></label>
+                        <input type="text" id="nome" required>
+                        <div class="error-msg">Preencha o nome completo.</div>
+                    </div>
+                    <div class="col">
+                        <label>Sexo <span class="req">*</span></label>
+                        <select id="sexo" required>
+                            <option value="">Selecione...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Feminino</option>
+                        </select>
+                        <div class="error-msg">Campo obrigatório.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Filiação 1</label>
+                        <input type="text" id="filiacao1">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Filiação 2</label>
+                        <input type="text" id="filiacao2">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-auto w-20">
+                        <label>Data de nascimento <span class="req">*</span></label>
+                        <input type="date" id="nascimento" required>
+                        <div class="error-msg">Data obrigatória.</div>
+                    </div>
+                    <div class="col checkbox-wrapper">
+                        <input type="checkbox" id="emancipado">
+                        <label for="emancipado">Emancipado</label>
+                        
+                        <input type="checkbox" id="adocao" style="margin-left: 15px;">
+                        <label for="adocao">Adoção Internacional</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Raça ou cor <span class="req">*</span></label>
+                        <select id="raca" required>
+                            <option value="">Selecione...</option>
+                            <option value="Branca">Branca</option>
+                            <option value="Preta">Preta</option>
+                            <option value="Parda">Parda</option>
+                        </select>
+                        <div class="error-msg">Campo obrigatório.</div>
+                    </div>
+                    <div class="col">
+                        <label>Estado civil</label>
+                        <select id="estado_civil">
+                            <option value="">Selecione...</option>
+                            <option value="Solteiro(a)">Solteiro(a)</option>
+                            <option value="Casado(a)">Casado(a)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Nacionalidade <span class="req">*</span></label>
+                        <select id="nacionalidade" required>
+                            <option value="BRASIL" selected>BRASIL</option>
+                            <option value="OUTRO">OUTRO</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section-title">Local de nascimento</div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>País <span class="req">*</span></label>
+                        <select required id="pais_nasc"><option>BRASIL</option></select>
+                    </div>
+                    <div class="col-auto w-10">
+                        <label>UF <span class="req">*</span></label>
+                        <select required id="uf_nasc"><option>SP</option><option>RJ</option></select>
+                    </div>
+                    <div class="col">
+                        <label>Cidade <span class="req">*</span></label>
+                        <select required id="cidade_nasc"><option>Selecione...</option><option>São Paulo</option></select>
+                    </div>
+                </div>
+
+                <div class="buttons-footer" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-next" onclick="goNext(2)">PRÓXIMO</button>
+                </div>
+            </div>
+
+            <div class="form-content" id="step-2">
+                
+                <div class="section-title">Documento de Identificação <span class="help-icon">?</span></div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Número <span class="req">*</span></label>
+                        <input type="text" required id="rg_num">
+                        <div class="error-msg">Obrigatório.</div>
+                    </div>
+                    <div class="col-auto w-20">
+                        <label>Data de emissão <span class="req">*</span></label>
+                        <input type="date" required id="rg_data">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Órgão emissor <span class="req">*</span></label>
+                        <input type="text" required id="rg_orgao">
+                    </div>
+                    <div class="col-auto w-20">
+                        <label>UF de expedição <span class="req">*</span></label>
+                        <select required id="rg_uf"><option>SP</option></select>
+                    </div>
+                </div>
+
+                <div class="section-title">CPF</div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>CPF <span class="req">*</span></label>
+                        <input type="text" placeholder="000.000.000-00" required id="cpf">
+                        <div class="error-msg">CPF Obrigatório.</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Passaporte Anterior <span class="help-icon">?</span></div>
+                <div class="row">
+                    <div class="col-auto w-50">
+                        <label>Situação <span class="req">*</span></label>
+                        <select required id="passaporte_ant">
+                            <option value="">Selecione...</option>
+                            <option value="Nunca">Nunca teve passaporte</option>
+                            <option value="Vencido">Vencido</option>
+                        </select>
+                        <div class="error-msg">Selecione a situação.</div>
+                    </div>
+                </div>
+
+                <div class="buttons-footer">
+                    <button type="button" class="btn btn-prev" onclick="goPrev(1)">ANTERIOR</button>
+                    <button type="button" class="btn btn-next" onclick="goNext(3)">PRÓXIMO</button>
+                </div>
+            </div>
+
+            <div class="form-content" id="step-3">
+                
+                <div class="section-title">Dados complementares</div>
+                <div class="row">
+                    <div class="col">
+                        <label>Profissão <span class="req">*</span></label>
+                        <select required id="profissao">
+                            <option value="">Selecione...</option>
+                            <option value="Estudante">Estudante</option>
+                            <option value="Engenheiro">Engenheiro</option>
+                        </select>
+                        <div class="error-msg">Selecione uma profissão.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label>E-mail <span class="req">*</span></label>
+                        <input type="email" required id="email">
+                        <div class="error-msg">E-mail obrigatório.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label>Confirmação do E-mail <span class="req">*</span></label>
+                        <input type="email" required id="email_conf">
+                    </div>
+                </div>
+
+                <div class="section-title">Endereço do requerente</div>
+                <div class="row">
+                    <div class="col-auto w-20">
+                        <label>CEP <span class="req">*</span></label>
+                        <input type="text" required id="cep">
+                    </div>
+                    <div class="col-auto w-10">
+                        <label>UF <span class="req">*</span></label>
+                        <select required id="end_uf"><option>SP</option></select>
+                    </div>
+                    <div class="col">
+                        <label>Cidade <span class="req">*</span></label>
+                        <select required id="end_cidade"><option>Selecione...</option><option>São Paulo</option></select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label>Logradouro <span class="req">*</span></label>
+                        <input type="text" required id="logradouro">
+                        <div class="error-msg">Preencha o logradouro.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label>Distrito/Bairro <span class="req">*</span></label>
+                        <input type="text" required id="bairro">
+                    </div>
+                </div>
+
+                <div class="buttons-footer">
+                    <button type="button" class="btn btn-prev" onclick="goPrev(2)">ANTERIOR</button>
+                    <button type="button" class="btn btn-next" onclick="goNext(4)">PRÓXIMO</button>
+                </div>
+            </div>
+
+            <div class="form-content" id="step-4">
+                <div class="section-title" style="border:none;">Confira atentamente as informações abaixo:</div>
+                <p style="font-size:0.9rem; color:#555; margin-bottom:20px;">
+                    Caso detecte algum erro, clique em ANTERIOR para corrigir.
+                </p>
+
+                <div style="background:#eef6ff; padding:20px; border:1px solid #cce0ff; border-radius:5px;">
+                    <p><strong>Nome:</strong> <span id="rev-nome"></span></p>
+                    <p><strong>Nascimento:</strong> <span id="rev-nasc"></span></p>
+                    <p><strong>CPF:</strong> <span id="rev-cpf"></span></p>
+                    <p><strong>Profissão:</strong> <span id="rev-prof"></span></p>
+                    <p><strong>E-mail:</strong> <span id="rev-email"></span></p>
+                </div>
+
+                <div style="margin-top:20px; padding:15px; background:#fff3cd; border:1px solid #ffeeba; border-radius:5px;">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="declaracao" required>
+                        <label for="declaracao">Declaro que as informações acima estão corretas e estou ciente de que qualquer erro implicará em atraso.</label>
+                    </div>
+                </div>
+
+                <div class="buttons-footer">
+                    <button type="button" class="btn btn-prev" onclick="goPrev(3)">ANTERIOR</button>
+                    <button type="button" class="btn btn-submit" onclick="attemptSubmit()">ENVIAR</button>
+                </div>
+            </div>
+
+            <div class="form-content" id="step-success" style="text-align: center; padding: 60px;">
+                <div style="font-size: 4rem; color: var(--success-green); margin-bottom: 20px;">✓</div>
+                <h2 style="color: var(--pf-dark-blue);">Solicitação enviada com sucesso!</h2>
+                <p style="font-size: 1.1rem; color: #555;">Protocolo: <strong>PF-2025-FINAL</strong></p>
+            </div>
+
+        </form>
+    </main>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <h3 style="margin-top:0; color:var(--pf-dark-blue);">Tem certeza que gostaria de enviar os dados preenchidos?</h3>
+            <p style="color:#666; font-size:0.9rem; margin:20px 0;">Após o envio, não será possível realizar alterações.</p>
+            <div style="display:flex; justify-content:center; gap:15px;">
+                <button class="btn btn-prev" onclick="closeModal()">Não</button>
+                <button class="btn btn-submit" onclick="finalSubmit()">Sim</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS MOCKADOS (Banco de dados falso) ---
+        const bancoDeDadosMock = {
+            'padrao': {
+                nome: "Carlos Eduardo da Silva",
+                sexo: "M",
+                filiacao1: "Maria da Silva",
+                filiacao2: "José da Silva",
+                nascimento: "1985-10-20",
+                emancipado: false,
+                raca: "Parda",
+                estado_civil: "Casado(a)",
+                pais_nasc: "BRASIL",
+                uf_nasc: "SP",
+                cidade_nasc: "São Paulo",
+                
+                rg_num: "44.555.666-X",
+                rg_data: "2010-05-15",
+                rg_orgao: "SSP",
+                rg_uf: "SP",
+                cpf: "123.456.789-00",
+                passaporte_ant: "Nunca",
+
+                profissao: "Engenheiro",
+                email: "carlos.silva@email.com",
+                email_conf: "carlos.silva@email.com",
+                cep: "01001-000",
+                end_uf: "SP",
+                end_cidade: "São Paulo",
+                logradouro: "Praça da Sé, 100",
+                bairro: "Sé"
+            },
+            'erro': {
+                nome: "", 
+                sexo: "F",
+                nascimento: "2000-01-01",
+                email: "emailerrado" 
+            }
+        };
+
+        function carregarMock(tipo) {
+            const dados = bancoDeDadosMock[tipo];
+            if (!dados) return;
+
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val || '';
+            };
+            
+            const setCheck = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.checked = val;
+            };
+
+            setVal('nome', dados.nome);
+            setVal('sexo', dados.sexo);
+            setVal('filiacao1', dados.filiacao1);
+            setVal('filiacao2', dados.filiacao2);
+            setVal('nascimento', dados.nascimento);
+            setCheck('emancipado', dados.emancipado);
+            setVal('raca', dados.raca);
+            setVal('estado_civil', dados.estado_civil);
+            setVal('pais_nasc', dados.pais_nasc);
+            setVal('uf_nasc', dados.uf_nasc);
+            setVal('cidade_nasc', dados.cidade_nasc);
+
+            setVal('rg_num', dados.rg_num);
+            setVal('rg_data', dados.rg_data);
+            setVal('rg_orgao', dados.rg_orgao);
+            setVal('rg_uf', dados.rg_uf);
+            setVal('cpf', dados.cpf);
+            setVal('passaporte_ant', dados.passaporte_ant);
+
+            setVal('profissao', dados.profissao);
+            setVal('email', dados.email);
+            setVal('email_conf', dados.email_conf);
+            setVal('cep', dados.cep);
+            setVal('end_uf', dados.end_uf);
+            setVal('end_cidade', dados.end_cidade);
+            setVal('logradouro', dados.logradouro);
+            setVal('bairro', dados.bairro);
+
+            alert(`Dados do perfil "${tipo}" carregados!`);
+        }
+
+        function limparFormulario() {
+            document.getElementById("mainForm").reset();
+            currentStep = 1;
+            changeStep(1);
+        }
+
+        let currentStep = 1;
+
+        function goNext(target) {
+            if (!validateStep(currentStep)) return;
+            
+            if (target === 4) {
+                document.getElementById('rev-nome').innerText = document.getElementById('nome').value;
+                document.getElementById('rev-nasc').innerText = document.getElementById('nascimento').value;
+                document.getElementById('rev-cpf').innerText = document.getElementById('cpf').value;
+                document.getElementById('rev-prof').innerText = document.getElementById('profissao').value;
+                document.getElementById('rev-email').innerText = document.getElementById('email').value;
+            }
+
+            changeStep(target);
+        }
+
+        function goPrev(target) {
+            changeStep(target);
+        }
+
+        function changeStep(step) {
+            document.querySelectorAll('.form-content').forEach(el => el.classList.remove('active-step'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('step-' + step).classList.add('active-step');
+            document.getElementById('tab-' + step).classList.add('active');
+            
+            currentStep = step;
+            window.scrollTo(0, 0);
+        }
+
+        function validateStep(step) {
+            let valid = true;
+            const container = document.getElementById('step-' + step);
+            const fields = container.querySelectorAll('[required]');
+
+            fields.forEach(field => {
+                const wrapper = field.parentElement; 
+                if (!field.value.trim() || (field.type === 'checkbox' && !field.checked)) {
+                    field.classList.add('error');
+                    if(wrapper.classList.contains('col') || wrapper.classList.contains('col-auto')) {
+                        wrapper.classList.add('has-error');
+                    }
+                    valid = false;
+                } else {
+                    field.classList.remove('error');
+                    if(wrapper.classList.contains('col') || wrapper.classList.contains('col-auto')) {
+                        wrapper.classList.remove('has-error');
+                    }
+                }
+            });
+            return valid;
+        }
+
+        function attemptSubmit() {
+            if (!validateStep(4)) return; 
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function finalSubmit() {
+            closeModal();
+            document.querySelectorAll('.form-content').forEach(el => el.classList.remove('active-step'));
+            document.querySelector('.tabs-container').style.display = 'none';
+            document.getElementById('step-success').classList.add('active-step');
+        }
+    </script>
+
+</body>
+</html>
